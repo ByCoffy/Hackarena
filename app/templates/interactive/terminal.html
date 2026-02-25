@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}{{ challenge.title }} — Terminal{% endblock %}
+
+{% block extra_head %}
+<!-- xterm.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+<style>
+    #terminal-container {
+        background: #000;
+        border: 2px solid #00ff88;
+        border-radius: 8px;
+        padding: 4px;
+        position: relative;
+    }
+
+    #terminal-container .xterm {
+        padding: 8px;
+    }
+
+    .terminal-header {
+        background: linear-gradient(135deg, #0a0a0a 0%, #111 100%);
+        border: 1px solid #333;
+        border-radius: 8px 8px 0 0;
+        padding: 10px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #00ff88;
+    }
+
+    .terminal-header .dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .terminal-header .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+
+    .terminal-title {
+        color: #00ff88;
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
+
+    .timer-display {
+        font-family: monospace;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .timer-ok { color: #00ff88; }
+    .timer-warning { color: #ffd60a; }
+    .timer-danger { color: #ff5f57; animation: blink 1s infinite; }
+
+    @keyframes blink {
+        50% { opacity: 0.5; }
+    }
+
+    .connection-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-connected { background: #28c840; }
+    .status-disconnected { background: #ff5f57; }
+    .status-connecting { background: #febc2e; animation: blink 0.5s infinite; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="card bg-dark border-secondary mb-3">
+            <div class="card-body">
+                <h5 class="mb-3">
+                    <i class="bi bi-terminal me-2 text-success"></i>{{ challenge.title }}
+                </h5>
+                {% set badge_text, badge_color = challenge.get_difficulty_badge() %}
+                <span class="badge bg-{{ badge_color }} mb-2">{{ badge_text }}</span>
+                <span class="badge bg-secondary mb-2">{{ challenge.points }} pts</span>
+
+                <hr class="border-secondary">
+
+                <p class="small text-muted">{{ challenge.description[:200] }}{% if challenge.description|length > 200 %}...{% endif %}</p>
+
+                <!-- Timer -->
+                <div class="text-center my-3">
+                    <small class="text-muted d-block mb-1">Tiempo restante</small>
+                    <div id="timer" class="timer-display timer-ok">--:--</div>
+                </div>
+
+                <!-- Connection Status -->
+                <div class="text-center mb-3">
+                    <span class="connection-status" id="connectionStatus">
+                        <span class="status-dot status-connecting" id="statusDot"></span>
+                        <span id="statusText">Conectando...</span>
+                    </span>
+                </div>
+
+                <hr class="border-secondary">
+
+                <!-- Flag submission -->
+                <form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}">
+                    <div class="mb-2">
+                        <label class="form-label small">Enviar Flag</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="flag" class="form-control bg-black border-secondary text-white font-monospace"
+                                   placeholder="FLAG{...}" required autocomplete="off">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <hr class="border-secondary">
+
+                <!-- Actions -->
+                <div class="d-grid gap-2">
+                    <form method="POST" action="{{ url_for('interactive.stop_instance', challenge_id=challenge.id) }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100"
+                                onclick="return confirm('¿Seguro? Se perderá todo el progreso.')">
+                            <i class="bi bi-stop-circle me-1"></i>Detener Instancia
+                        </button>
+                    </form>
+                    <a href="{{ url_for('challenges.challenge_detail', challenge_id=challenge.id) }}"
+                       class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Volver al Reto
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="col-lg-9">
+        <div class="terminal-header">
+            <div class="dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+            </div>
+            <span class="terminal-title">
+                <i class="bi bi-terminal me-1"></i>
+                {{ challenge.title }} — CTFArena Terminal
+            </span>
+            <div class="dots" style="visibility:hidden">
+                <span class="dot"></span>
+            </div>
+        </div>
+        <div id="terminal-container"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Terminal Setup ---
+    const term = new Terminal({
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
+        theme: {
+            background: '#0a0a0a',
+            foreground: '#e0e0e0',
+            cursor: '#00ff88',
+            cursorAccent: '#000',
+            selectionBackground: 'rgba(0, 255, 136, 0.3)',
+            black: '#0a0a0a',
+            red: '#ff5f57',
+            green: '#28c840',
+            yellow: '#febc2e',
+            blue: '#2196f3',
+            magenta: '#c77dff',
+            cyan: '#00bcd4',
+            white: '#e0e0e0',
+            brightBlack: '#555',
+            brightRed: '#ff6e67',
+            brightGreen: '#5af78e',
+            brightYellow: '#f4f99d',
+            brightBlue: '#caa9fa',
+            brightMagenta: '#ff92d0',
+            brightCyan: '#9aedfe',
+            brightWhite: '#f1f1f0',
+        },
+        allowProposedApi: true,
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+    term.loadAddon(fitAddon);
+    term.loadAddon(webLinksAddon);
+
+    const container = document.getElementById('terminal-container');
+    term.open(container);
+    fitAddon.fit();
+
+    // Resize handler
+    window.addEventListener('resize', () => fitAddon.fit());
+    new ResizeObserver(() => fitAddon.fit()).observe(container);
+
+    // --- SocketIO Connection ---
+    const challengeId = {{ challenge.id }};
+    const socket = io('/terminal', {
+        transports: ['websocket', 'polling']
+    });
+
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    function setStatus(status) {
+        statusDot.className = 'status-dot status-' + status;
+        const labels = {
+            'connected': 'Conectado',
+            'disconnected': 'Desconectado',
+            'connecting': 'Conectando...'
+        };
+        statusText.textContent = labels[status] || status;
+    }
+
+    socket.on('connect', function() {
+        setStatus('connected');
+        // Tell server to start the exec session
+        socket.emit('start_terminal', {
+            challenge_id: challengeId,
+            cols: term.cols,
+            rows: term.rows
+        });
+    });
+
+    socket.on('disconnect', function() {
+        setStatus('disconnected');
+        term.write('\r\n\x1b[31m[Desconectado]\x1b[0m La conexión se ha perdido.\r\n');
+    });
+
+    socket.on('connect_error', function(err) {
+        setStatus('disconnected');
+        term.write('\r\n\x1b[31m[Error]\x1b[0m No se pudo conectar al servidor.\r\n');
+    });
+
+    // Receive output from container
+    socket.on('output', function(data) {
+        term.write(data.data);
+    });
+
+    // Send input to container
+    term.onData(function(data) {
+        socket.emit('input', { data: data });
+    });
+
+    // Send resize events
+    term.onResize(function(size) {
+        socket.emit('resize', { cols: size.cols, rows: size.rows });
+    });
+
+    // --- Countdown Timer ---
+    let timeRemaining = {{ time_remaining }};
+    const timerEl = document.getElementById('timer');
+
+    function updateTimer() {
+        if (timeRemaining <= 0) {
+            timerEl.textContent = '00:00';
+            timerEl.className = 'timer-display timer-danger';
+            term.write('\r\n\x1b[31m[CTFArena]\x1b[0m ⏰ ¡Tiempo agotado! La instancia se cerrará.\r\n');
+            return;
+        }
+
+        timeRemaining--;
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        timerEl.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+
+        // Color based on time remaining
+        if (timeRemaining > 300) {
+            timerEl.className = 'timer-display timer-ok';
+        } else if (timeRemaining > 60) {
+            timerEl.className = 'timer-display timer-warning';
+        } else {
+            timerEl.className = 'timer-display timer-danger';
+        }
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+
+    // Focus terminal
+    term.focus();
+});
+</script>
+{% endblock %}
