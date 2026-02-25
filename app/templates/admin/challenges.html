@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Gestionar Retos — Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-puzzle text-warning me-2"></i>Gestionar Retos</h2>
+    <a href="{{ url_for('admin.create_challenge') }}" class="btn btn-success">
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Reto
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Categoría</th>
+                <th>Dificultad</th>
+                <th class="text-center">Puntos</th>
+                <th class="text-center">Solves</th>
+                <th class="text-center">Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ch in challenges %}
+            {% set badge_text, badge_color = ch.get_difficulty_badge() %}
+            <tr>
+                <td>
+                    {{ ch.title }}
+                    {% if ch.is_timed() %}<i class="bi bi-clock text-info ms-1"></i>{% endif %}
+                </td>
+                <td><span class="badge bg-secondary">{{ ch.category.name }}</span></td>
+                <td><span class="badge bg-{{ badge_color }}">{{ badge_text }}</span></td>
+                <td class="text-center">{{ ch.points }}</td>
+                <td class="text-center">{{ ch.solve_count() }}</td>
+                <td class="text-center">
+                    <form method="POST" action="{{ url_for('admin.toggle_challenge', chall_id=ch.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm {{ 'btn-success' if ch.is_active else 'btn-outline-secondary' }}">
+                            {{ 'Activo' if ch.is_active else 'Inactivo' }}
+                        </button>
+                    </form>
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.edit_challenge', chall_id=ch.id) }}" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.delete_challenge', chall_id=ch.id) }}" class="d-inline"
+                          onsubmit="return confirm('¿Eliminar este reto y todos sus datos?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary mt-3">
+    <i class="bi bi-arrow-left me-2"></i>Volver al Panel
+</a>
+{% endblock %}

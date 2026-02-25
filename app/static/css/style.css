@@ -1,0 +1,115 @@
+/* HackArena CTF - Custom Styles */
+
+:root {
+    --ctf-green: #00ff88;
+    --ctf-dark: #0a0a0a;
+    --ctf-card: #111111;
+}
+
+body {
+    background: var(--ctf-dark);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Terminal-style code blocks */
+code, .font-monospace {
+    color: var(--ctf-green) !important;
+}
+
+/* Card hover effect */
+.card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 255, 136, 0.1);
+}
+
+/* Challenge cards solved state */
+.card.border-success {
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.15);
+}
+
+/* Flag input styling */
+input[placeholder="FLAG{...}"] {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+/* Leaderboard medal rows */
+.table-active {
+    background-color: rgba(0, 255, 136, 0.05) !important;
+}
+
+/* Smooth animations for alerts */
+.alert {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #111;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Challenge description */
+.challenge-description {
+    line-height: 1.7;
+}
+
+.challenge-description code {
+    background: #000;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.challenge-description pre {
+    background: #000;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #333;
+    overflow-x: auto;
+}
+
+/* Badge improvements */
+.badge {
+    font-weight: 500;
+}
+
+/* Navbar active link */
+.nav-link:hover {
+    color: var(--ctf-green) !important;
+}
+
+/* Form focus states */
+.form-control:focus, .form-select:focus {
+    border-color: var(--ctf-green);
+    box-shadow: 0 0 0 0.2rem rgba(0, 255, 136, 0.15);
+}
