@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block title %}Unirse{% endblock %}
+{% block content %}<div class="row justify-content-center"><div class="col-md-5"><h3 class="mb-4">Unirse a un Equipo</h3><div class="card bg-dark border-secondary"><div class="card-body p-4">
+<form method="POST"><div class="mb-3"><label class="form-label">Codigo de Invitacion</label><input type="text" name="invite_code" class="form-control bg-black border-secondary text-white" required></div>
+<button class="btn btn-info">Unirse</button><a href="{{ url_for('teams.team_list') }}" class="btn btn-outline-secondary ms-2">Cancelar</a></form></div></div></div></div>{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if category else 'Nueva' }} Categoría — Admin{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h3 class="mb-4">{{ 'Editar Categoría' if category else 'Nueva Categoría' }}</h3>
+        <div class="card bg-dark border-secondary">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="name" class="form-control bg-black border-secondary text-white"
+                               required value="{{ category.name if category else '' }}" placeholder="Ej: Web, Crypto, Forensics...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <input type="text" name="description" class="form-control bg-black border-secondary text-white"
+                               value="{{ category.description if category else '' }}" placeholder="Breve descripción">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Icono (Bootstrap Icons)</label>
+                            <input type="text" name="icon" class="form-control bg-black border-secondary text-white"
+                                   value="{{ category.icon if category else 'bi-puzzle' }}" placeholder="bi-puzzle">
+                            <small class="text-muted">Ver: <a href="https://icons.getbootstrap.com/" target="_blank" class="text-info">icons.getbootstrap.com</a></small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Color</label>
+                            <input type="color" name="color" class="form-control form-control-color bg-black border-secondary"
+                                   value="{{ category.color if category else '#00ff88' }}">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-2"></i>{{ 'Guardar' if category else 'Crear' }}
+                        </button>
+                        <a href="{{ url_for('admin.categories') }}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
