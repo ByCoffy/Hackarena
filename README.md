@@ -75,7 +75,7 @@ EXIT;
 #### 3. Configurar la aplicación
 
 ```bash
-git clone https://github.com/tu-usuario/hackarena-ctf.git
+git clone https://github.com/ByCoffy/hackarena-ctf.git
 cd hackarena-ctf
 
 python3 -m venv venv
