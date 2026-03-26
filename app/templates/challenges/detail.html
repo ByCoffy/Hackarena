@@ -1,26 +1,179 @@
-{% extends "base.html" %}{% block title %}{{ challenge.title }}{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ challenge.title }} — {{ ctf_name }}{% endblock %}
+
 {% block content %}
-<div class="row g-4"><div class="col-lg-8"><div class="card bg-dark border-secondary"><div class="card-body p-4">
-{% set bt,bc = challenge.get_difficulty_badge() %}
-<div class="d-flex justify-content-between align-items-start mb-3"><div><h2 class="mb-1">{% if solved %}<i class="bi bi-check-circle-fill text-success me-2"></i>{% endif %}{{ challenge.title }}</h2>
-<div class="d-flex gap-2 flex-wrap"><span class="badge bg-{{ bc }}">{{ bt }}</span><span class="badge bg-secondary"><i class="{{ challenge.category.icon }} me-1"></i>{{ challenge.category.name }}</span>{% if challenge.is_interactive %}<span class="badge bg-info"><i class="bi bi-terminal me-1"></i>Interactivo</span>{% endif %}</div></div>
-<div class="text-end"><div class="h2 text-success mb-0">{{ challenge.points }}</div><small class="text-muted">puntos</small></div></div>
-<hr class="border-secondary"><div class="challenge-description mb-4">{{ challenge.description|safe }}</div>
-{% if challenge.attachment_filename %}<div class="mb-4"><a href="{{ url_for('static', filename='uploads/'+challenge.attachment_filename) }}" class="btn btn-outline-info" download><i class="bi bi-download me-2"></i>{{ challenge.attachment_filename }}</a></div>{% endif %}
-{% if challenge.challenge_url %}<div class="mb-4"><a href="{{ challenge.challenge_url }}" target="_blank" class="btn btn-outline-warning"><i class="bi bi-box-arrow-up-right me-2"></i>Abrir</a></div>{% endif %}
-{% if challenge.is_interactive and challenge.docker_image %}<div class="card bg-black border-info mb-4"><div class="card-body"><h5><i class="bi bi-terminal me-2 text-info"></i>Reto Interactivo</h5><p class="text-muted small mb-3">Terminal Docker aislada para ti.</p>
-<div class="d-flex gap-2">{% if active_container %}<a href="{{ url_for('interactive.terminal', challenge_id=challenge.id) }}" class="btn btn-info"><i class="bi bi-terminal me-2"></i>Abrir Terminal</a>
-<form method="POST" action="{{ url_for('interactive.stop_instance', challenge_id=challenge.id) }}" class="d-inline"><button class="btn btn-outline-danger btn-sm" onclick="return confirm('Detener?')"><i class="bi bi-stop-circle me-1"></i>Detener</button></form><span class="badge bg-success align-self-center">Activa</span>
-{% else %}<form method="POST" action="{{ url_for('interactive.start_instance', challenge_id=challenge.id) }}"><button class="btn btn-info"><i class="bi bi-play-circle me-2"></i>Iniciar Instancia</button></form><span class="text-muted small align-self-center"><i class="bi bi-clock me-1"></i>{{ (challenge.container_timeout or 1800)//60 }} min</span>{% endif %}</div></div></div>{% endif %}
-{% if not solved and challenge.is_available() %}<div class="card bg-black border-success"><div class="card-body"><h5><i class="bi bi-flag me-2 text-success"></i>Enviar Flag</h5>
-<form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}"><div class="input-group"><input type="text" name="flag" class="form-control bg-dark border-secondary text-white font-monospace" placeholder="FLAG{...}" required autocomplete="off"><button class="btn btn-success"><i class="bi bi-send me-1"></i>Enviar</button></div></form></div></div>
-{% elif solved %}<div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>Ya resuelto!</div>{% endif %}
-{% if hints %}<div class="mt-4"><h5><i class="bi bi-lightbulb me-2 text-warning"></i>Pistas</h5>
-{% for h in hints %}<div class="card bg-black border-secondary mb-2"><div class="card-body py-2">{% if h.id in unlocked_hint_ids %}<div class="d-flex justify-content-between"><div><i class="bi bi-unlock text-warning me-2"></i>{{ h.content }}</div><span class="badge bg-warning text-dark">-{{ h.cost }}</span></div>
-{% else %}<div class="d-flex justify-content-between align-items-center"><span class="text-muted"><i class="bi bi-lock me-2"></i>Pista {{ loop.index }}</span>
-<form method="POST" action="{{ url_for('challenges.unlock_hint', challenge_id=challenge.id, hint_id=h.id) }}" onsubmit="return confirm('Desbloquear? -{{ h.cost }} pts')"><button class="btn btn-sm btn-outline-warning">-{{ h.cost }} pts</button></form></div>{% endif %}</div></div>{% endfor %}</div>{% endif %}
-</div></div></div>
-<div class="col-lg-4"><div class="card bg-dark border-secondary"><div class="card-header bg-transparent border-secondary"><h5 class="mb-0"><i class="bi bi-people me-2"></i>Resuelto ({{ solvers|length }})</h5></div>
-<div class="card-body p-0">{% if solvers %}<div class="list-group list-group-flush">{% for s in solvers %}<div class="list-group-item bg-dark border-secondary d-flex justify-content-between"><div><span class="text-muted me-2">{{ loop.index }}.</span>{% if s.is_first_blood %}<span class="badge bg-danger me-1">1st</span>{% endif %}<a href="{{ url_for('main.profile', username=s.user.username) }}" class="text-white text-decoration-none">{{ s.user.username }}</a></div><small class="text-muted">{{ s.solved_at.strftime('%d/%m %H:%M') }}</small></div>{% endfor %}</div>
-{% else %}<div class="text-center py-4 text-muted">Nadie aun. Se el primero!</div>{% endif %}</div></div>
-<a href="{{ url_for('challenges.challenge_list') }}" class="btn btn-outline-secondary w-100 mt-3"><i class="bi bi-arrow-left me-2"></i>Volver</a></div></div>{% endblock %}
+<div class="row g-4">
+    <!-- Challenge Info -->
+    <div class="col-lg-8">
+        <div class="card bg-dark border-secondary">
+            <div class="card-body p-4">
+                {% set badge_text, badge_color = challenge.get_difficulty_badge() %}
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="mb-1">
+                            {% if solved %}<i class="bi bi-check-circle-fill text-success me-2"></i>{% endif %}
+                            {{ challenge.title }}
+                        </h2>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="badge bg-{{ badge_color }}">{{ badge_text }}</span>
+                            <span class="badge bg-secondary">
+                                <i class="{{ challenge.category.icon }} me-1"></i>{{ challenge.category.name }}
+                            </span>
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-person me-1"></i>by {{ challenge.author }}
+                            </span>
+                            {% if challenge.is_timed() %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-clock me-1"></i>Con tiempo límite
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="h2 text-success mb-0">{{ challenge.points }}</div>
+                        <small class="text-muted">puntos</small>
+                    </div>
+                </div>
+
+                {% if challenge.is_timed() %}
+                <div class="alert alert-info py-2">
+                    <i class="bi bi-clock me-2"></i>
+                    {% if challenge.starts_at %}Inicio: {{ challenge.starts_at.strftime('%d/%m/%Y %H:%M UTC') }}{% endif %}
+                    {% if challenge.ends_at %}
+                    · Fin: {{ challenge.ends_at.strftime('%d/%m/%Y %H:%M UTC') }}
+                    {% set remaining = challenge.time_remaining() %}
+                    {% if remaining %}
+                    <strong class="text-warning ms-2">({{ remaining.days }}d {{ remaining.seconds // 3600 }}h restantes)</strong>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <hr class="border-secondary">
+
+                <div class="challenge-description mb-4">
+                    {{ challenge.description | safe }}
+                </div>
+
+                {% if challenge.attachment_filename %}
+                <div class="mb-4">
+                    <a href="{{ url_for('static', filename='uploads/' + challenge.attachment_filename) }}"
+                       class="btn btn-outline-info" download>
+                        <i class="bi bi-download me-2"></i>{{ challenge.attachment_filename }}
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if challenge.challenge_url %}
+                <div class="mb-4">
+                    <a href="{{ challenge.challenge_url }}" target="_blank" class="btn btn-outline-warning">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Abrir Challenge
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Flag Submission -->
+                {% if not solved and challenge.is_available() %}
+                <div class="card bg-black border-success">
+                    <div class="card-body">
+                        <h5><i class="bi bi-flag me-2 text-success"></i>Enviar Flag</h5>
+                        <form method="POST" action="{{ url_for('challenges.submit_flag', challenge_id=challenge.id) }}">
+                            <div class="input-group">
+                                <input type="text" name="flag" class="form-control bg-dark border-secondary text-white"
+                                       placeholder="FLAG{...}" required autocomplete="off">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-send me-1"></i>Enviar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% elif solved %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <strong>¡Ya has resuelto este reto!</strong>
+                </div>
+                {% elif not challenge.is_available() %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-lock me-2"></i>
+                    <strong>Este reto no está disponible en este momento.</strong>
+                </div>
+                {% endif %}
+
+                <!-- Hints -->
+                {% if hints %}
+                <div class="mt-4">
+                    <h5><i class="bi bi-lightbulb me-2 text-warning"></i>Pistas</h5>
+                    {% for hint in hints %}
+                    <div class="card bg-black border-secondary mb-2">
+                        <div class="card-body py-2">
+                            {% if hint.id in unlocked_hint_ids %}
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <i class="bi bi-unlock text-warning me-2"></i>
+                                    {{ hint.content }}
+                                </div>
+                                <span class="badge bg-warning text-dark">-{{ hint.cost }} pts</span>
+                            </div>
+                            {% else %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">
+                                    <i class="bi bi-lock me-2"></i>Pista {{ loop.index }} (bloqueada)
+                                </span>
+                                <form method="POST" action="{{ url_for('challenges.unlock_hint', challenge_id=challenge.id, hint_id=hint.id) }}"
+                                      onsubmit="return confirm('¿Desbloquear pista? Penalización: -{{ hint.cost }} puntos')">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-unlock me-1"></i>Desbloquear (-{{ hint.cost }} pts)
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar: Solvers -->
+    <div class="col-lg-4">
+        <div class="card bg-dark border-secondary">
+            <div class="card-header bg-transparent border-secondary">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Resuelto por ({{ solvers|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if solvers %}
+                <div class="list-group list-group-flush">
+                    {% for solve in solvers %}
+                    <div class="list-group-item bg-dark border-secondary d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted me-2">{{ loop.index }}.</span>
+                            {% if solve.is_first_blood %}
+                            <span class="badge bg-danger me-1">🩸</span>
+                            {% endif %}
+                            <a href="{{ url_for('main.profile', username=solve.user.username) }}"
+                               class="text-decoration-none text-white">
+                                {{ solve.user.username }}
+                            </a>
+                        </div>
+                        <small class="text-muted">{{ solve.solved_at.strftime('%d/%m %H:%M') }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-emoji-wink display-6"></i>
+                    <p class="mt-2 mb-0">Nadie lo ha resuelto aún.<br>¡Consigue el First Blood!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <a href="{{ url_for('challenges.challenge_list') }}" class="btn btn-outline-secondary w-100 mt-3">
+            <i class="bi bi-arrow-left me-2"></i>Volver a Retos
+        </a>
+    </div>
+</div>
+{% endblock %}

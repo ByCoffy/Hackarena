@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]
+*.so
 venv/
 .env
 *.db
@@ -9,3 +10,6 @@ app/static/uploads/*
 .vscode/
 .idea/
 *.log
+dist/
+build/
+*.egg-info/

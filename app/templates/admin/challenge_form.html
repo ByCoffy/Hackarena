@@ -2,30 +2,42 @@
 {% block title %}{{ 'Editar' if challenge else 'Nuevo' }} Reto — Admin{% endblock %}
 
 {% block content %}
-<h2 class="mb-4"><i class="bi bi-{{ 'pencil' if challenge else 'plus-lg' }} text-warning me-2"></i>{{ 'Editar Reto: ' + challenge.title if challenge else 'Crear Nuevo Reto' }}</h2>
+<h2 class="mb-4">
+    <i class="bi bi-{{ 'pencil' if challenge else 'plus-lg' }} text-warning me-2"></i>
+    {{ 'Editar Reto: ' + challenge.title if challenge else 'Crear Nuevo Reto' }}
+</h2>
 
 <form method="POST" enctype="multipart/form-data">
     <div class="row g-4">
+        <!-- Main Info -->
         <div class="col-lg-8">
             <div class="card bg-dark border-secondary">
                 <div class="card-body p-4">
                     <h5 class="mb-3">Información del Reto</h5>
+
                     <div class="mb-3">
                         <label class="form-label">Título *</label>
-                        <input type="text" name="title" class="form-control bg-black border-secondary text-white" required value="{{ challenge.title if challenge else '' }}">
+                        <input type="text" name="title" class="form-control bg-black border-secondary text-white"
+                               required value="{{ challenge.title if challenge else '' }}" placeholder="Nombre del reto">
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Descripción * (HTML permitido)</label>
-                        <textarea name="description" rows="6" class="form-control bg-black border-secondary text-white" required>{{ challenge.description if challenge else '' }}</textarea>
+                        <textarea name="description" rows="6" class="form-control bg-black border-secondary text-white"
+                                  required placeholder="Describe el reto. Puedes usar HTML.">{{ challenge.description if challenge else '' }}</textarea>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Flag *</label>
-                        <input type="text" name="flag" class="form-control bg-black border-secondary text-white font-monospace" required value="{{ challenge.flag if challenge else '' }}" placeholder="FLAG{...}">
+                        <label class="form-label">Flag * (exacta)</label>
+                        <input type="text" name="flag" class="form-control bg-black border-secondary text-white font-monospace"
+                               required value="{{ challenge.flag if challenge else '' }}" placeholder="FLAG{tu_flag_aqui}">
                     </div>
+
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Puntos *</label>
-                            <input type="number" name="points" class="form-control bg-black border-secondary text-white" required min="1" value="{{ challenge.points if challenge else 100 }}">
+                            <input type="number" name="points" class="form-control bg-black border-secondary text-white"
+                                   required min="1" value="{{ challenge.points if challenge else 100 }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Dificultad *</label>
@@ -45,20 +57,26 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="row g-3 mt-1">
                         <div class="col-md-6">
                             <label class="form-label">Autor</label>
-                            <input type="text" name="author" class="form-control bg-black border-secondary text-white" value="{{ challenge.author if challenge else 'Admin' }}">
+                            <input type="text" name="author" class="form-control bg-black border-secondary text-white"
+                                   value="{{ challenge.author if challenge else 'Admin' }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">URL del Challenge</label>
-                            <input type="url" name="challenge_url" class="form-control bg-black border-secondary text-white" value="{{ challenge.challenge_url if challenge else '' }}">
+                            <label class="form-label">URL del Challenge (opcional)</label>
+                            <input type="url" name="challenge_url" class="form-control bg-black border-secondary text-white"
+                                   value="{{ challenge.challenge_url if challenge else '' }}" placeholder="http://...">
                         </div>
                     </div>
+
                     <div class="mt-3">
                         <label class="form-label">Archivo Adjunto</label>
                         <input type="file" name="attachment" class="form-control bg-black border-secondary text-white">
-                        {% if challenge and challenge.attachment_filename %}<small class="text-muted">Actual: {{ challenge.attachment_filename }}</small>{% endif %}
+                        {% if challenge and challenge.attachment_filename %}
+                        <small class="text-muted">Actual: {{ challenge.attachment_filename }}</small>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -68,63 +86,52 @@
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0"><i class="bi bi-lightbulb text-warning me-2"></i>Pistas</h5>
-                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="addHint()"><i class="bi bi-plus me-1"></i>Añadir</button>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="addHint()">
+                            <i class="bi bi-plus me-1"></i>Añadir Pista
+                        </button>
                     </div>
                     <div id="hints-container">
-                        {% if challenge and hints %}{% for hint in hints %}
+                        {% if challenge and hints %}
+                        {% for hint in hints %}
                         <div class="hint-row row g-2 mb-2 align-items-center">
-                            <div class="col"><input type="text" name="hint_content[]" class="form-control form-control-sm bg-black border-secondary text-white" value="{{ hint.content }}"></div>
-                            <div class="col-auto" style="width:100px"><input type="number" name="hint_cost[]" class="form-control form-control-sm bg-black border-secondary text-white" value="{{ hint.cost }}" min="0"></div>
-                            <div class="col-auto"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.hint-row').remove()"><i class="bi bi-trash"></i></button></div>
+                            <div class="col">
+                                <input type="text" name="hint_content[]" class="form-control form-control-sm bg-black border-secondary text-white"
+                                       value="{{ hint.content }}" placeholder="Contenido de la pista">
+                            </div>
+                            <div class="col-auto" style="width:100px">
+                                <input type="number" name="hint_cost[]" class="form-control form-control-sm bg-black border-secondary text-white"
+                                       value="{{ hint.cost }}" placeholder="Coste" min="0">
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.hint-row').remove()">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
                         </div>
-                        {% endfor %}{% endif %}
+                        {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Time Limits -->
             <div class="card bg-dark border-secondary">
                 <div class="card-body">
                     <h5><i class="bi bi-clock me-2 text-info"></i>Tiempo Límite</h5>
                     <div class="mb-3">
-                        <label class="form-label">Inicio</label>
-                        <input type="datetime-local" name="starts_at" class="form-control bg-black border-secondary text-white" value="{{ challenge.starts_at.strftime('%Y-%m-%dT%H:%M') if challenge and challenge.starts_at else '' }}">
+                        <label class="form-label">Inicio (opcional)</label>
+                        <input type="datetime-local" name="starts_at" class="form-control bg-black border-secondary text-white"
+                               value="{{ challenge.starts_at.strftime('%Y-%m-%dT%H:%M') if challenge and challenge.starts_at else '' }}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Fin</label>
-                        <input type="datetime-local" name="ends_at" class="form-control bg-black border-secondary text-white" value="{{ challenge.ends_at.strftime('%Y-%m-%dT%H:%M') if challenge and challenge.ends_at else '' }}">
+                        <label class="form-label">Fin (opcional)</label>
+                        <input type="datetime-local" name="ends_at" class="form-control bg-black border-secondary text-white"
+                               value="{{ challenge.ends_at.strftime('%Y-%m-%dT%H:%M') if challenge and challenge.ends_at else '' }}">
                     </div>
-                </div>
-            </div>
-
-            <!-- Interactive Docker -->
-            <div class="card bg-dark border-secondary mt-3">
-                <div class="card-body">
-                    <h5><i class="bi bi-terminal me-2 text-success"></i>Reto Interactivo (Docker)</h5>
-                    <div class="form-check form-switch mb-3">
-                        <input type="checkbox" name="is_interactive" class="form-check-input" id="is_interactive"
-                               {{ 'checked' if challenge and challenge.is_interactive }} onchange="toggleDockerFields()">
-                        <label class="form-check-label" for="is_interactive">Reto Interactivo</label>
-                    </div>
-                    <div id="docker-fields" style="{{ '' if challenge and challenge.is_interactive else 'display:none' }}">
-                        <div class="mb-3">
-                            <label class="form-label">Imagen Docker</label>
-                            <input type="text" name="docker_image" class="form-control bg-black border-secondary text-white font-monospace"
-                                   value="{{ challenge.docker_image if challenge and challenge.docker_image else '' }}" placeholder="ctfarena/privesc-suid">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Timeout (segundos)</label>
-                            <input type="number" name="container_timeout" class="form-control bg-black border-secondary text-white"
-                                   value="{{ challenge.container_timeout if challenge else 1800 }}" min="60" max="7200">
-                        </div>
-                        <div class="form-check form-switch">
-                            <input type="checkbox" name="container_network" class="form-check-input" id="container_network"
-                                   {{ 'checked' if challenge and challenge.container_network }}>
-                            <label class="form-check-label" for="container_network">Permitir red</label>
-                        </div>
-                    </div>
+                    <small class="text-muted">Déjalos vacíos si el reto no tiene límite de tiempo.</small>
                 </div>
             </div>
 
@@ -132,14 +139,18 @@
             <div class="card bg-dark border-secondary mt-3">
                 <div class="card-body">
                     <div class="form-check form-switch">
-                        <input type="checkbox" name="is_active" class="form-check-input" id="is_active" {{ 'checked' if not challenge or challenge.is_active }}>
+                        <input type="checkbox" name="is_active" class="form-check-input" id="is_active"
+                               {{ 'checked' if not challenge or challenge.is_active }}>
                         <label class="form-check-label" for="is_active">Reto Activo</label>
                     </div>
                 </div>
             </div>
 
+            <!-- Actions -->
             <div class="d-grid gap-2 mt-3">
-                <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-lg me-2"></i>{{ 'Guardar' if challenge else 'Crear Reto' }}</button>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-lg me-2"></i>{{ 'Guardar Cambios' if challenge else 'Crear Reto' }}
+                </button>
                 <a href="{{ url_for('admin.challenges') }}" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </div>
@@ -150,14 +161,21 @@
 {% block extra_scripts %}
 <script>
 function addHint() {
-    const c = document.getElementById('hints-container');
-    const r = document.createElement('div');
-    r.className = 'hint-row row g-2 mb-2 align-items-center';
-    r.innerHTML = '<div class="col"><input type="text" name="hint_content[]" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="Pista"></div><div class="col-auto" style="width:100px"><input type="number" name="hint_cost[]" class="form-control form-control-sm bg-black border-secondary text-white" value="25" min="0"></div><div class="col-auto"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'.hint-row\').remove()"><i class="bi bi-trash"></i></button></div>';
-    c.appendChild(r);
-}
-function toggleDockerFields() {
-    document.getElementById('docker-fields').style.display = document.getElementById('is_interactive').checked ? '' : 'none';
+    const container = document.getElementById('hints-container');
+    const row = document.createElement('div');
+    row.className = 'hint-row row g-2 mb-2 align-items-center';
+    row.innerHTML = `
+        <div class="col">
+            <input type="text" name="hint_content[]" class="form-control form-control-sm bg-black border-secondary text-white" placeholder="Contenido de la pista">
+        </div>
+        <div class="col-auto" style="width:100px">
+            <input type="number" name="hint_cost[]" class="form-control form-control-sm bg-black border-secondary text-white" value="25" placeholder="Coste" min="0">
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.hint-row').remove()"><i class="bi bi-trash"></i></button>
+        </div>
+    `;
+    container.appendChild(row);
 }
 </script>
 {% endblock %}
